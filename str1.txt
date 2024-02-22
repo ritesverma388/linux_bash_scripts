@@ -1,0 +1,8 @@
+NAME="/dev/sda" TYPE="disk" SIZE="60G" OWNER="root" GROUP="disk" MODE="brw-rw----" PKNAME="" MOUNTPOINT=""
+NAME="/dev/sda1" TYPE="part" SIZE="500M" OWNER="root" GROUP="disk" MODE="brw-rw----" PKNAME="/dev/sda" MOUNTPOINT="/boot"
+NAME="/dev/sda2" TYPE="part" SIZE="29.5G" OWNER="root" GROUP="disk" MODE="brw-rw----" PKNAME="/dev/sda" MOUNTPOINT=""
+NAME="/dev/mapper/centos-root" TYPE="lvm" SIZE="56.5G" OWNER="root" GROUP="disk" MODE="brw-rw----" PKNAME="/dev/sda2" MOUNTPOINT="/"
+NAME="/dev/mapper/centos-swap" TYPE="lvm" SIZE="3G" OWNER="root" GROUP="disk" MODE="brw-rw----" PKNAME="/dev/sda2" MOUNTPOINT="[SWAP]"
+NAME="/dev/sda3" TYPE="part" SIZE="30G" OWNER="root" GROUP="disk" MODE="brw-rw----" PKNAME="/dev/sda" MOUNTPOINT=""
+NAME="/dev/mapper/centos-root" TYPE="lvm" SIZE="56.5G" OWNER="root" GROUP="disk" MODE="brw-rw----" PKNAME="/dev/sda3" MOUNTPOINT="/"
+NAME="/dev/sr0" TYPE="rom" SIZE="603M" OWNER="root" GROUP="cdrom" MODE="brw-rw----" PKNAME="" MOUNTPOINT=""
