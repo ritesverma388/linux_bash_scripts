@@ -1,18 +1,3 @@
-Need to find the values of the following settings for the prod customers on CNA (All regions)
-
-
-Alation conf value of 
-
-alation.authentication.builtin.enabled
-
-alation.authentication.ldap.enabled
-
-alation.authentication.saml.enabled
-
-alation.authentication.oidc.enabled
-
-Output of SiteSettings.get('account_policy').get('moderate_signups') run from alation_django_shell
-
 
 #!/bin/bash
 ​
@@ -45,7 +30,7 @@ OUTPUT_FILE_NAME="zeus-bulk-query-output.txt"
 ​
 ​
 ​
-query1="SELECT DISTINCT ds.id AS ds_id, title, connector.name FROM rosemeta_datasource ds LEFT JOIN rosemeta_ocfconfiguration conf ON conf.ds_id = ds.id LEFT JOIN connector_metadata_connector connector ON conf.connector_id = connector.id;
+#query1="SELECT DISTINCT ds.id AS ds_id, title, connector.name FROM rosemeta_datasource ds LEFT JOIN rosemeta_ocfconfiguration conf ON conf.ds_id = ds.id LEFT JOIN connector_metadata_connector connector ON conf.connector_id = connector.id;
 "
 ​
 #aws ec2 describe-regions --region eu-west-1 | grep "RegionName" | awk '{ print $2 }' | tr -d '",' > regions.txt
@@ -59,7 +44,7 @@ query1="SELECT DISTINCT ds.id AS ds_id, title, connector.name FROM rosemeta_data
 if [[ -f $OUTPUT_FILE_NAME ]]; then
     rm -f $OUTPUT_FILE_NAME
 fi
-​
+
 read -p "Please Confirm If Zeus KUBECONFIG Exported [Y/N] :" ZEUS_KUBECONFIG
 ​
 if [ "$ZEUS_KUBECONFIG" = "Y" ]; then
@@ -108,13 +93,21 @@ if [ "$ZEUS_KUBECONFIG" = "Y" ]; then
                     echo "$j, exec not working on alationfc, $j"
                 else
                     for n in {1..1}; do
-                        query=query$n
-                        echo "${!query}"
                         echo -e "------------------------------------- Tenant iD : $j ------------------------------------- \n"
                         echo -e "\n\n--------------------------------- Tenant iD : $j ------------------------------------- \n" >> $OUTPUT_FILE_NAME
-                        result=$(kubectl exec -it deploy/alationfc -n $j -- chroot /opt/alation/alation /bin/su - alation -c "echo \"${!query}\" | alation_psql")
-                        echo $result
-                        echo -e "$result"  >> $OUTPUT_FILE_NAME
+                        result1=$(kubectl exec -it deploy/alationfc -n $j -- chroot /opt/alation/alation /bin/su - alation -c "alation_conf base_url")
+                        echo $result1
+                        echo -e "$result1" >> $OUTPUT_FILE_NAME
+                        host=$(kubectl exec -it deploy/alationfc -n 59c52336-1f68-48c1-a872-3524c802db25 -- chroot /opt/alation/alation /bin/su - alation -c "alation_conf alation_analytics-v2.pgsql.config.host | cut -d '=' -f2 | tr -d '[:space:]'")
+
+                        db=$(kubectl exec -it deploy/alationfc -n 59c52336-1f68-48c1-a872-3524c802db25 -- chroot /opt/alation/alation /bin/su - alation -c "alation_conf alation_analytics-v2.pgsql.config.dbname | cut -d '=' -f2 | tr -d '[:space:]'")
+
+                        user=$(kubectl exec -it deploy/alationfc -n 59c52336-1f68-48c1-a872-3524c802db25 -- chroot /opt/alation/alation /bin/su - alation -c "alation_conf alation_analytics-v2.pgsql.user | cut -d '=' -f2 | tr -d '[:space:]'")
+
+                        pass=$(kubectl exec -it deploy/alationfc -n 59c52336-1f68-48c1-a872-3524c802db25 -- chroot /opt/alation/alation /bin/su - alation -c "alation_conf alation_analytics-v2.pgsql.password | cut -d '=' -f2 | tr -d '[:space:]'")
+
+                        kubectl exec -it deploy/alationfc -n 59c52336-1f68-48c1-a872-3524c802db25 -- chroot /opt/alation/alation /bin/su - alation -c "PGPASSWORD=\"${pass}\" psql -U \"${user}\" -d \"${db}\" -h \"${host}\" -c \"select 1\" -c \"select 1\""
+                        
                         echo -e "\n\n================================================================================================\n"
                         echo -e "\n\n================================================================================================\n" >> $OUTPUT_FILE_NAME
                     done
@@ -125,10 +118,10 @@ if [ "$ZEUS_KUBECONFIG" = "Y" ]; then
 fi
 
 
- 026c51db-1e43-4274-978f-eb401b2ec893
+#  026c51db-1e43-4274-978f-eb401b2ec893
  
- kubectl exec -it deploy/alationfc -n 026c51db-1e43-4274-978f-eb401b2ec893 -- chroot /opt/alation/alation /bin/su - alation -c "echo \"${!query1}\" | alation_psql"
+#  kubectl exec -it deploy/alationfc -n 026c51db-1e43-4274-978f-eb401b2ec893 -- chroot /opt/alation/alation /bin/su - alation -c "echo \"${!query1}\" | alation_psql"
  
- result1=$(kubectl exec -it deploy/alationfc -n $j -- chroot /opt/alation/alation /bin/su - alation -c "alation_conf base_url")
+#  result1=$(kubectl exec -it deploy/alationfc -n $j -- chroot /opt/alation/alation /bin/su - alation -c "alation_conf base_url")
 
- ###
+#  ###
