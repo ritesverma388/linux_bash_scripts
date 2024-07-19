@@ -1,0 +1,74 @@
+alationadmin_user="/bin/su - alationadmin -c"
+alation_user="/bin/su - alation -c"
+alation_psql_util="alation_pgsql_util run_psql"
+alation_user="/bin/su - alation -c"
+chroot_base="chroot /opt/alation/alation"
+OUTPUT_FILE_NAME="zeus-bulk-query-output.txt"
+q1="select * from  bi_metadata_connector where connector_id in (select id from connector_metadata_connector where name like '%Tableau OCF Connector%');"
+if [[ -f $OUTPUT_FILE_NAME ]]; then
+    rm -f $OUTPUT_FILE_NAME
+fi
+read -p "Please Confirm If Zeus KUBECONFIG Exported [Y/N] :" ZEUS_KUBECONFIG
+if [ "$ZEUS_KUBECONFIG" = "Y" ]; then
+    #kubectl config get-contexts | grep -E '\bprod' | grep prod-enterprise-use1 | awk '{ print $2 }' > zeus-cluster-contexts.txt
+    # ps -ef | grep port-forward | grep kubectl
+    # if [ $? -eq 0 ]; then
+    #     PROCESS_ID=`ps -ef | grep port-forward | grep kubectl | awk '{ print $2 }'`
+    #     kill -9 $PROCESS_ID
+    # fi
+    # kubectl port-forward service/tenant-resource-catalog 8001:80 &
+    # echo -e "\n"
+    # sleep 12
+    # echo -e "\n Fetching All TENANTS ID in All PROD ZEUS clusters"
+    # sleep 6
+    for i in `cat zeus-cluster-contexts.txt`; do
+        ps -ef | grep port-forward | grep kubectl
+        if [ $? -eq 0 ]; then
+            PROCESS_ID=`ps -ef | grep port-forward | grep kubectl | awk '{ print $2 }'`
+            kill -9 $PROCESS_ID
+        fi
+        echo -e "\n Switching Context Name : $i"
+        kubectl config use-context $i
+        kubectl port-forward service/tenant-resource-catalog 8001:80 &
+        echo -e "\n Port Forwarding Configuring ....\n"
+        sleep 15
+        echo -e "\n Fetching All TENANTS ID in ZEUS cluster - $i\n"
+        sleep 6
+        echo -e "\n Set Cluster Context to : $i"
+        sleep 5
+        #curl -X 'GET' 'http://localhost:8001/resourceSets?status=assigned' -H 'accept: application/json' | jq -r .resource_sets[].tenant_id > $i-tenants-id.txt
+        for j in `cat tenants-id.txt`; do
+            echo "********************************** Tenant-ID: $j *******************************"
+            echo -e "\n\n\n"
+            kubectl get deployment -n $j | grep "^alationfc"  > /dev/null
+            pod_status=$?
+            if [ $pod_status -eq 0 ]; then
+                echo -e "\n\n**********************  Checking pod Health on $j ********************\n\n"
+                kubectl exec -it deploy/alationfc -n $j -- hostname
+                pod_health=$?
+                if [ $pod_health -ne 0 ]; then
+                    echo "$j, exec not working on alationfc, $j"
+                else
+                    for n in {1..1}; do
+                        query=q$n
+                        echo "${!query}"
+                        echo -e "------------------------------------- Tenant iD : $j ------------------------------------- \n"
+                        echo -e "\n\n--------------------------------- Tenant iD : $j -------------------------------------- \n" >> $OUTPUT_FILE_NAME
+                        kubectl exec -it deploy/alationfc -n $j -- chroot /opt/alation/alation /bin/su - alation -c "alation_conf lineage-service.mt_lineage.images.link_resolver -s v0.0.17-dev.76"
+                        result1=$(kubectl exec -it deploy/alationfc -n $j -- chroot /opt/alation/alation /bin/su - alation -c "alation_conf base_url")
+                        echo $result1
+                        echo -e "$result1" >> $OUTPUT_FILE_NAME
+                        result2=$(kubectl exec -it deploy/alationfc -n $j -- chroot /opt/alation/alation /bin/su - alation -c "alation_conf lineage-service.mt_lineage.images.link_resolver")
+                        echo $result2
+                        echo -e "$result2" >> $OUTPUT_FILE_NAME
+                        #result=$(kubectl exec -it deploy/alationfc -n $j -- chroot /opt/alation/alation /bin/su - alation -c "echo \"${!q1}\" | alation_psql")
+                        #echo $result
+                        #echo -e "$result"  >> $OUTPUT_FILE_NAME
+                        echo -e "\n\n================================================================================================\n"
+                        echo -e "\n\n================================================================================================\n" >> $OUTPUT_FILE_NAME
+                    done
+                fi
+            fi
+        done
+    done
+fi
