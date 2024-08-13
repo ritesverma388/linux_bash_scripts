@@ -11,6 +11,6 @@ IFS="$delimiter" read -ra substrings <<< "$string"
 
 # Iterate over each substring and extract the first character
 for substring in "${substrings[@]}"; do
-   first_char="${substring:0:1}"
+   first_char="${substring:0:2}"
    echo "$first_char"
 done

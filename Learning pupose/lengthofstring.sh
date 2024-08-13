@@ -23,4 +23,4 @@ y=$(($y+1))
 x=$(($x-1))
 done
 echo "${substr[@]}"
-printf '%s\n' "${substr[@]}"
+printf '%s ' "${substr[@]}"
